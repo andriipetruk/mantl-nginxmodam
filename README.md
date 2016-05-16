@@ -10,7 +10,7 @@
 1. git clone git@github.com:andriipetruk/mantl-nginxmodam.git
 2. cd mantl-nginxmodam
 3. docker build -t mantl-nginxmodam -f Dockerfile .
-4. docker run --link mantl-openam  --link mantl-nginx  --name mantl-nginxmodam -p 80:8080  -d mantl-nginxmodam 
+4. docker run --link mantl-openam  --link mantl-nginx --env-file=conf/nginx.env  -v conf:/root/conf --name mantl-nginxmodam -p 80:8080  -d mantl-nginxmodam 
 ```
 
 

@@ -16,7 +16,10 @@ RUN wget -P /tmp -q --no-check-certificate \
         rm /tmp/nginx_agent_20141119.deb.x86_64.zip
 
 
-COPY nginx.conf /opt/nginx_agent/conf/nginx.conf
+
+RUN rm /opt/nginx_agent/conf/nginx.conf && \
+    ln -s  /root/conf/nginx.conf /opt/nginx_agent/conf/nginx.conf
+
 WORKDIR /opt/nginx_agent/
 
 CMD ./bin/agentadmin.sh && ./bin/nginx -c ./conf/nginx.conf -g "daemon off;"
