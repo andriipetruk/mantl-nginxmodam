@@ -9750,7 +9750,18 @@ var _CiscoCloud$mantl_ui_frontend$Mantl$view = function (model) {
 												_elm_lang$html$Html$text(
 												_CiscoCloud$mantl_ui_frontend$Health$statusToString(model.health.status))
 											]))
-									]))
+									])),
+								A2(
+								_elm_lang$html$Html$div,
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_CiscoCloud$mantl_ui_frontend$Attributes$classes(
+										_elm_lang$core$Native_List.fromArray(
+											['nav', 'navbar-nav', 'pull-right'])),
+										A2(_elm_lang$html$Html_Attributes$attribute, 'id', 'openam_login')
+									]),
+								_elm_lang$core$Native_List.fromArray(
+									[]))
 							]))
 					])),
 				A2(

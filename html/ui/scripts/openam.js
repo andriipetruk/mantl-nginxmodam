@@ -61,5 +61,18 @@ if (group == 'cndp-mesos-users') {
 }
 
 
-if ( i == null) { setTimeout(openam, 0) } 
+   if ( i == null) { setTimeout(openam, 0) } 
 }
+
+function openam_menu() {
+   var openam_user = getCookie('HTTP_CUSTOM-uid');
+   var openam_div = document.getElementById('openam_login');
+   if ( openam_div != null) {
+      openam_div.innerHTML="<ul class='menu'><li><a href=#>SIGNED IN AS: "+ openam_user +"</a><ul class='submenu'><li><a href='"+openam_logout+"'>LOG OUT</a></li></ul></li></ul>";
+
+}
+
+   if ( openam_div == null) { setTimeout(openam_menu, 0) }
+
+}
+
