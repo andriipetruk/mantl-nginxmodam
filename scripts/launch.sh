@@ -78,7 +78,7 @@ fi
 [[ -n "${CONSUL_TOKEN}" ]] && ctargs="${ctargs} -token ${CONSUL_TOKEN}"
 
 
-/opt/nginx_agent/bin/agentadmin.sh
+cd /opt/nginx_agent && ./bin/agentadmin.sh --install
 #generate_config
 reload_consul_template
 

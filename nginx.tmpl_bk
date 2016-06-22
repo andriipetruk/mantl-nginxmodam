@@ -4,6 +4,8 @@ events {
     worker_connections	1024;
 }
 
+  error_log /opt/nginx_agent/logs/error.log  debug;
+
 {{$SSL := or (key "config/mantlui/ssl") (or (env "MANTLUI_SSL") "false") | parseBool}}
 {{$AUTH := or (key "config/mantl/auth") (or (env "MANTLUI_AUTH") "false") | parseBool}}
 {{$consulSSL := or (key "config/mantl/consul_ssl") (or (env "CONSUL_SSL") "false") | parseBool}}
@@ -15,8 +17,17 @@ http {
     sendfile		on;
     keepalive_timeout	65;
 
+    send_timeout 20;
+    proxy_buffering on;
+    proxy_buffer_size 8k;
+    proxy_buffers 2048 8k;
+
+  error_log /opt/nginx_agent/logs/error.log  debug_http;
+  access_log /opt/nginx_agent/logs/access.log;
+
+
     am_boot_file "/opt/nginx_agent/conf/OpenSSOAgentBootstrap.properties";
-    #am_conf_file "/opt/nginx_agent/conf/OpenSSOAgentConfiguration.properties";
+    am_conf_file "/opt/nginx_agent/conf/OpenSSOAgentConfiguration.properties";
 
     {{$mesos := service "leader.mesos" "any"}}{{with $mesos}}
     upstream mesos { {{range $mesos}}
@@ -77,7 +88,7 @@ http {
 
     server {
         listen {{if $SSL}}443 ssl{{else}}80{{end}};
-
+        
         {{if $SSL}}
         ssl_certificate     {{or (env "CERTFILE") "/etc/nginx/ssl/nginx.cert"}};
         ssl_certificate_key	{{or (env "KEYFILE")  "/etc/nginx/ssl/nginx.key"}};
@@ -91,7 +102,16 @@ http {
         error_page 497 https://$host:$server_port$request_uri;
         {{end}}
 
+       {{if $AUTH}}
+        auth_basic              on;
+        auth_basic_user_file    /etc/nginx/nginx-auth.conf;
+        {{end}}
 
+
+        error_log /opt/nginx_agent/logs/error.log  debug;
+        access_log /opt/nginx_agent/logs/access.log;
+        
+       
         location / {
             proxy_connect_timeout	600;
             proxy_send_timeout	600;
@@ -136,6 +156,11 @@ http {
             proxy_pass http://{{.Address}}:{{.Port}}/$1$is_args$args;
         }{{end}}
 
+        location /marathon/v2/apps {
+         root /usr/share/nginx/marathon_wrapper;
+         index index.html;
+        } 
+
         {{with $marathon}}
         location /marathon/ {
             proxy_set_header        host $host;
@@ -169,6 +194,7 @@ http {
             proxy_set_header        x-real-ip $remote_addr;
             proxy_set_header        x-forwarded-for $proxy_add_x_forwarded_for;
             proxy_set_header        x-forwarded-proto $scheme;
+            proxy_set_header        Authorization "Basic YWRtaW46cmVkaGF0Cg==";
             proxy_pass {{if $consulSSL}}https{{else}}http{{end}}://consul/$1$is_args$args;
         } {{end}}
 
@@ -236,5 +262,6 @@ http {
             proxy_set_header        x-forwarded-proto $scheme;
             proxy_pass http://kafka-api/;
         } {{end}}
+       
     }
 }
