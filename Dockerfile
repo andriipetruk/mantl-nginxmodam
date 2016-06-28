@@ -6,9 +6,18 @@ MAINTAINER Andrii Petruk <andrey.petruk@gmail.com>
 ENV CONSUL_TEMPLATE_VERSION=0.10.0
 #OPENAM_URL=http://openam:8080/openam AGENT_PROFILE_NAME=WebAgent AGENT_PASSWORD=password CONFIRM=y
 
+ENV LUAJIT_VERSION 2.0.3
+ENV LUAJIT_MAJOR_VERSION 2.0
+ENV LUAJIT_LIB /usr/local/lib
 
-RUN yum -y install unzip  zlib-devel nspr-devel nss-devel libxml2-devel pcre-devel openssl-dev && \
+RUN yum -y install unzip tar file gcc  gcc-c++  zlib-devel nspr-devel nss-devel libxml2-devel pcre-devel openssl-dev wget && \
     ln -s /lib64/libpcre.so.0 /lib64/libpcre.so.1
+
+RUN  cd /tmp && \
+     wget http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.tar.gz && \
+     tar xvf LuaJIT-${LUAJIT_VERSION}.tar.gz && \
+     cd /tmp/LuaJIT-${LUAJIT_VERSION} &&  make install && \
+     ln -s /usr/local/lib/libluajit-5.1.so.2 /lib64/libluajit-5.1.so.2
 
 ADD https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip /
 

@@ -156,6 +156,11 @@ http {
             proxy_pass http://{{.Address}}:{{.Port}}/$1$is_args$args;
         }{{end}}
 
+         location /lua/ {
+            root   /usr/share/nginx/marathon_wrapper;
+            index  index.html index.htm;
+            content_by_lua_file marathon.lua;
+        }
 
         {{with $marathon}}
         location /marathon/ {

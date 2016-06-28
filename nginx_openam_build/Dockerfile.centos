@@ -101,6 +101,10 @@ RUN cd /tmp && \
 RUN sed -i "/with-openssl/i\\\t\\t--add-module=\/tmp\/redis2-nginx-module \\\\" \
     /tmp/opensso/products/webagents/agents/source/nginx/Makefile
 
+# add   PCRE JIT
+RUN sed -i "/redis2-nginx-module/i\\\t\\t--with-pcre-jit \\\\" \
+    /tmp/opensso/products/webagents/agents/source/nginx/Makefile
+
 # Feel free to add here as many extra modules as you want
 
 ## --- END EXTRA NGINX MODULES TO ADD ---
