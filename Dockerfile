@@ -6,9 +6,13 @@ MAINTAINER Andrii Petruk <andrey.petruk@gmail.com>
 ENV CONSUL_TEMPLATE_VERSION=0.10.0
 #OPENAM_URL=http://openam:8080/openam AGENT_PROFILE_NAME=WebAgent AGENT_PASSWORD=password CONFIRM=y
 
-ENV LUAJIT_VERSION 2.0.3
-ENV LUAJIT_MAJOR_VERSION 2.0
-ENV LUAJIT_LIB /usr/local/lib
+ENV LUAJIT_VERSION=2.0.3 \
+    LUAJIT_MAJOR_VERSION=2.0 \
+    LUAJIT_LIB=/usr/local/lib \
+    LUACJSON_VERSION=2.1.0 \
+    LUA_INCLUDE_DIR=/usr/local/include/luajit-2.0 \
+    LUAINC=/usr/local/include/luajit-2.0 \
+    LUAJIT_INC=/usr/local/include/luajit-2.0
 
 RUN yum -y install unzip tar file gcc  gcc-c++  zlib-devel nspr-devel nss-devel libxml2-devel pcre-devel openssl-dev wget && \
     ln -s /lib64/libpcre.so.0 /lib64/libpcre.so.1
@@ -16,8 +20,13 @@ RUN yum -y install unzip tar file gcc  gcc-c++  zlib-devel nspr-devel nss-devel 
 RUN  cd /tmp && \
      wget http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.tar.gz && \
      tar xvf LuaJIT-${LUAJIT_VERSION}.tar.gz && \
-     cd /tmp/LuaJIT-${LUAJIT_VERSION} &&  make install && \
-     ln -s /usr/local/lib/libluajit-5.1.so.2 /lib64/libluajit-5.1.so.2
+     make install --directory=/tmp/LuaJIT-${LUAJIT_VERSION} && \
+     ln -s /usr/local/lib/libluajit-5.1.so.2 /lib64/libluajit-5.1.so.2 && \
+     wget http://www.kyne.com.au/~mark/software/download/lua-cjson-${LUACJSON_VERSION}.tar.gz && \
+     tar xvf lua-cjson-${LUACJSON_VERSION}.tar.gz && \
+     make --directory=/tmp/lua-cjson-${LUACJSON_VERSION} LUA_INCLUDE_DIR=$LUA_INCLUDE_DIR && \
+     make install --directory=/tmp/lua-cjson-${LUACJSON_VERSION}
+
 
 ADD https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip /
 
@@ -51,7 +60,7 @@ COPY nginx.tmpl /consul-template/templates/
 COPY services.json.tmpl /consul-template/templates/
 COPY index_html.tmpl /consul-template/templates/
 COPY consul.cfg /consul-template/config.d/
-
+COPY marathon.lua /opt/nginx_agent/ 
 
 CMD ["/scripts/launch.sh"]
 #CMD [ "/usr/local/bin/consul-template"]
