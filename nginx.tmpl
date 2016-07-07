@@ -164,6 +164,31 @@ http {
 
         {{with $marathon}}
         location /marathon/ {
+            access_by_lua '
+            cjson = require "cjson"
+            headers = ngx.req.get_headers()
+            if headers["Cookie"] then
+               cookies = {}
+               for k, v in string.gmatch(headers["Cookie"], "([^=]+)=([^;]+);?%s*") do
+                 cookies[k] = v
+               end
+             end
+             role = cookies["HTTP_CUSTOM-uid"]
+             if ngx.var.request_method == "GET" then
+                 labelSelectorQuery = "label=role=="..role
+                 ngx.req.set_uri_args(labelSelectorQuery)
+            end
+            if ngx.var.request_method == "POST" then
+                local body = ngx.req.get_body_data()
+                local data = cjson.decode(body)
+                if data["container"] then
+                   data["labels"] = {}
+                   data["labels"]["role"]={}
+                   data["labels"]["role"]=role
+                   json_data = cjson.encode(data)
+                   ngx.req.set_body_data(json_data)
+                 end
+            end';            
             proxy_set_header        host $host;
             proxy_set_header        x-real-ip $remote_addr;
             proxy_set_header        x-forwarded-for $proxy_add_x_forwarded_for;

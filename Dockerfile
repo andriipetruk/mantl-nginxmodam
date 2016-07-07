@@ -15,7 +15,9 @@ ENV LUAJIT_VERSION=2.0.3 \
     LUAJIT_INC=/usr/local/include/luajit-2.0
 
 RUN yum -y install unzip tar file gcc  gcc-c++  zlib-devel nspr-devel nss-devel libxml2-devel pcre-devel openssl-dev wget && \
-    ln -s /lib64/libpcre.so.0 /lib64/libpcre.so.1
+    ln -s /lib64/libpcre.so.0 /lib64/libpcre.so.1 && \
+    ln -s /usr/lib64/libcrypto.so.10 /usr/lib64/libcrypto.so && \
+    ln -s /usr/lib64/libssl.so.10 /usr/lib64/libssl.so
 
 RUN  cd /tmp && \
      wget http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.tar.gz && \
@@ -52,15 +54,13 @@ RUN unzip /tmp/nginx_Linux_64_agent_4.0.0-SNAPSHOT.zip -d /opt && \
 
 COPY OpenSSOAgentConfiguration.properties /opt/nginx_agent/conf/OpenSSOAgentConfiguration.properties 
 
-RUN mkdir -p /usr/share/nginx
+RUN  mkdir -p /usr/share/nginx
 COPY html /usr/share/nginx/html
-COPY marathon_wrapper /usr/share/nginx/marathon_wrapper
-ADD error /opt/nginx_agent/error
+ADD  error /opt/nginx_agent/error
 COPY nginx.tmpl /consul-template/templates/
 COPY services.json.tmpl /consul-template/templates/
 COPY index_html.tmpl /consul-template/templates/
 COPY consul.cfg /consul-template/config.d/
-COPY marathon.lua /opt/nginx_agent/ 
 
 CMD ["/scripts/launch.sh"]
 #CMD [ "/usr/local/bin/consul-template"]
