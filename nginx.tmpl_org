@@ -17,6 +17,11 @@ http {
     sendfile		on;
     keepalive_timeout	65;
 
+    send_timeout 20;
+    proxy_buffering on;
+    proxy_buffer_size 8k;
+    proxy_buffers 2048 8k;
+
   error_log /opt/nginx_agent/logs/error.log  debug_http;
   access_log /opt/nginx_agent/logs/access.log;
 
@@ -151,105 +156,8 @@ http {
             proxy_pass http://{{.Address}}:{{.Port}}/$1$is_args$args;
         }{{end}}
 
-
         {{with $marathon}}
-
-            access_by_lua '
-            cjson = require "cjson"
-            local headers = ngx.req.get_headers()
-            local request_uri = ngx.var.request_uri
-            if ngx.var.request_method == "GET" then
-               if headers["Cookie"] then
-                  local cookies = {}
-                  for k, v in string.gmatch(headers["Cookie"], "([^=]+)=([^;]+);?%s*") do
-                     cookies[k] = v
-                  end
-                  if cookies["HTTP_orga"] then
-                     roles = {}
-                     cookies_orga = cookies["HTTP_orga"]
-                     string.gsub(cookies_orga, "([^|]+)", function(value) roles[#roles + 1] =     value;  end)
-                  end
-                  if cookies["HTTP_org"] then
-                     cookies_org = cookies["HTTP_org"]
-                   end
-                end
-                if string.find(ngx.var.uri, "^/marathon/v2/apps$") then
-                   local labelSelectorQuery ="label=org%20in%20("
-                   if cookies_org then labelSelectorQuery=labelSelectorQuery..string.lower(cookies_org) end
-                   flag=0
-                   if roles then
-                      for i,rolec in ipairs(roles) do
-                         if flag then labelSelectorQuery=labelSelectorQuery.."," end
-                         labelSelectorQuery=labelSelectorQuery..string.lower(rolec)
-                         flag = 1
-                      end
-                   end
-                   labelSelectorQuery=labelSelectorQuery..")"
-                   ---ngx.say(labelSelectorQuery)
-                   ngx.req.set_uri_args(labelSelectorQuery)
-                end
-            end
-            if ngx.var.request_method == "POST" then
-                if headers["Cookie"] then
-                   local cookies = {}
-                   for k, v in string.gmatch(headers["Cookie"], "([^=]+)=([^;]+);?%s*") do
-                      cookies[k] = v
-                   end
-                   if cookies["HTTP_org"] then
-                      cookies_org = cookies["HTTP_org"]
-                      role = string.lower(cookies_org)
-                   end
-                end
-                local body = ngx.req.get_body_data()
-                local data = cjson.decode(body)
-                if data["container"] then
-                   data["labels"] = {}
-                   data["labels"]["org"]={}
-                   data["labels"]["org"]=role
-                   local app_id = data["id"]
-                   data["id"] =  "app-group/"..role.."/"..app_id
-                   json_data = cjson.encode(data)
-                   ngx.req.set_body_data(json_data)
-                  --- res = ngx.location.capture("/marathon/v2/groups", { share_all_vars = true, method = ngx.HTTP_POST, body = json_data } )
-                  --- ngx.say(res.body)
-                  ---ngx.req.set_uri("/marathon/v2/groups", true)
-                end
-            end';
-
-            rewrite_by_lua '
-               if  string.find(ngx.var.uri, "^/marathon/v2/groups$") then
-                  cjson = require "cjson"
-                  local headers = ngx.req.get_headers()
-                  if headers["Cookie"] then
-                     local cookies = {}
-                     for k, v in string.gmatch(headers["Cookie"], "([^=]+)=([^;]+);?%s*") do
-                        cookies[k] = v
-                     end
-                     if cookies["HTTP_orga"] then
-                        roles = {}
-                        cookies_orga = cookies["HTTP_orga"]
-                        string.gsub(cookies_orga, "([^|]+)", function(value) roles[#roles + 1] =     value;  end)
-                        role = string.lower(roles[1])
-                     end
-                     if cookies["HTTP_org"] then
-                        cookies_org = cookies["HTTP_org"]
-                     end
-                  end
-                  local labelSelectorQuery ="label=role%20in%20("
-                  if cookies_org then labelSelectorQuery=labelSelectorQuery..string.lower(cookies_org) end
-                  flag=0
-                  if roles then
-                     for i,rolec in ipairs(roles) do
-                        if flag then labelSelectorQuery=labelSelectorQuery.."," end
-                        labelSelectorQuery=labelSelectorQuery..string.lower(rolec)
-                        flag = 1
-                     end
-                   end
-                   labelSelectorQuery=labelSelectorQuery..")"
-                   ngx.req.set_uri_args(labelSelectorQuery)
-                   ngx.req.set_uri("/marathon/v2/apps", true)
-               end';
-
+        location /marathon/ {
             proxy_set_header        host $host;
             proxy_set_header        x-real-ip $remote_addr;
             proxy_set_header        x-forwarded-for $proxy_add_x_forwarded_for;

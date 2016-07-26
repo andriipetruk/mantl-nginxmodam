@@ -17,15 +17,18 @@ function getCookie(cname) {
     return "";
 };
 
-function CheckGroup(group) {
+function getGroup() {
    var tmp=getCookie('HTTP_group');
-   if (tmp.indexOf(group)+1) { return 1} else {return 0}
+   var tmps = tmp.split('=');
+   tmp = tmps[1].split(',');
+   return tmp[0];
 };
 
 
 function openam() {
+   var group = getGroup();
 
-if (CheckGroup('cndp-admin-users')) {
+if (group == 'cndp-admin-users') {
    var i = document.getElementById('mesos');
    if ( i != null) {
       i.style.display='inline';
@@ -41,14 +44,14 @@ if (CheckGroup('cndp-admin-users')) {
 }
 
 
-if (CheckGroup('cndp-k8s-users')) {
+if (group == 'cndp-k8s-users') {
    var i = document.getElementById('kubernetes');
    if ( i != null) {
       i.style.display='inline';
    } 
 }
 
-if (CheckGroup('cndp-mesos-users')) {
+if (group == 'cndp-mesos-users') {
    var i = document.getElementById('mesos');
    if ( i != null) {
       i.style.display='inline';
